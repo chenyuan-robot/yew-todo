@@ -1,5 +1,8 @@
 mod app;
+mod footer;
 mod header;
+mod item;
+mod list;
 mod tests;
 
 fn main() {

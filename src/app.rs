@@ -1,6 +1,11 @@
+use crate::footer::Footer;
 use crate::header::Header;
+use crate::list::List;
+use gloo::storage::{LocalStorage, Storage};
 use web_sys::window;
 use yew::prelude::*;
+
+const KEY: &'static str = "yew.todomvc.self";
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -28,6 +33,7 @@ pub fn app() -> Html {
             //     todo_list.push(name);
             //     todo_list
             // });
+
             // 方式二：
             // todo_list.set(
             //     todo_list
@@ -36,6 +42,7 @@ pub fn app() -> Html {
             //         .chain(std::iter::once(name)) // 加上输入框的内容
             //         .collect(),
             // );
+
             // 方式三：
             todo_list.set(
                 todo_list
@@ -47,14 +54,24 @@ pub fn app() -> Html {
         })
     };
 
+    use_effect_with(todo_list.clone(), {
+        let todo_list = todo_list.clone();
+        move |_| {
+            LocalStorage::set(KEY, todo_list.to_vec()).expect("save to localstorage occur error");
+        }
+    });
+
     html! {
         <div id="app">
-            <section class="todoapp"></section>
+            <section class="todoapp" />
             <Header on_create={on_create} />
             {
                 if todo_list.len() > 0 {
                     html! {
-                        <div>{"nihao"}</div>
+                        <>
+                            <List />
+                            <Footer />
+                        </>
                     }
                 } else {
                     html! {
