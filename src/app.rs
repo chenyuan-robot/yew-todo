@@ -15,7 +15,27 @@ pub fn app() -> Html {
                     .unwrap()
                     .alert_with_message("输入内容不能为空")
                     .unwrap();
+                return;
             }
+            let is_exist = todo_list.contains(&name);
+            if is_exist {
+                window().unwrap().alert_with_message("名称已存在").unwrap();
+                return;
+            }
+            // 方式一：
+            // todo_list.set({
+            //     let mut todo_list = (*todo_list).clone();
+            //     todo_list.push(name);
+            //     todo_list
+            // });
+            // 方式一：
+            todo_list.set(
+                todo_list
+                    .iter()
+                    .cloned() // 每一项 clone
+                    .chain(std::iter::once(name)) // 加上输入框的内容
+                    .collect(),
+            );
         })
     };
 
