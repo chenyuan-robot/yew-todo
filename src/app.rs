@@ -29,11 +29,19 @@ pub fn app() -> Html {
             //     todo_list
             // });
             // 方式二：
+            // todo_list.set(
+            //     todo_list
+            //         .iter()
+            //         .cloned() // 每一项 clone
+            //         .chain(std::iter::once(name)) // 加上输入框的内容
+            //         .collect(),
+            // );
+            // 方式三：
             todo_list.set(
                 todo_list
                     .iter()
-                    .cloned() // 每一项 clone
-                    .chain(std::iter::once(name)) // 加上输入框的内容
+                    .cloned()
+                    .chain([name].into_iter()) // [name] 是一个数组 .into_iter() 把它变成一个迭代器。 效果跟 once(name) 是一样的
                     .collect(),
             );
         })

@@ -7,3 +7,7 @@ pub struct Student {
 }
 
 impl Student {}
+
+pub fn tests() {
+    println!("result i_________s tests");
+}
