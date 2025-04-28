@@ -5,7 +5,7 @@ use yew::prelude::*;
 #[function_component(App)]
 pub fn app() -> Html {
     // let todo_list = use_state(|| vec![String::default()]);
-    let todo_list = use_state(|| vec!["".to_string()]);
+    let todo_list = use_state(|| vec![]);
 
     let on_create = {
         let todo_list = todo_list.clone();
@@ -28,7 +28,7 @@ pub fn app() -> Html {
             //     todo_list.push(name);
             //     todo_list
             // });
-            // 方式一：
+            // 方式二：
             todo_list.set(
                 todo_list
                     .iter()
@@ -43,6 +43,17 @@ pub fn app() -> Html {
         <div id="app">
             <section class="todoapp"></section>
             <Header on_create={on_create} />
+            {
+                if todo_list.len() > 0 {
+                    html! {
+                        <div>{"nihao"}</div>
+                    }
+                } else {
+                    html! {
+                        <div>{"none"}</div>
+                    }
+                }
+            }
         </div>
     }
 }
