@@ -8,7 +8,7 @@ pub fn app() -> Html {
     let todo_list = use_state(|| vec![]);
 
     let on_create = {
-        let todo_list = todo_list.clone();
+        let todo_list = todo_list.to_owned();
         Callback::from(move |name: String| {
             if name.is_empty() {
                 window()
