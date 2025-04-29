@@ -1,6 +1,7 @@
-use crate::footer::Footer;
 use crate::header::Header;
 use crate::list::List;
+use crate::Filter;
+use crate::{footer::Footer, TodoEntry};
 use gloo::storage::{LocalStorage, Storage};
 use web_sys::window;
 use yew::prelude::*;
@@ -9,8 +10,11 @@ const KEY: &'static str = "yew.todomvc.self";
 
 #[function_component(App)]
 pub fn app() -> Html {
-    // let todo_list = use_state(|| vec![String::default()]);
-    let todo_list = use_state(|| vec![]);
+    let filter = use_state(|| Filter::All);
+    let todo_list = use_state(|| vec![TodoEntry::new(String::default())]);
+
+    let filter_result = use_memo(filter, move |_| format!("the result is {}", "hello"));
+    log::debug!("{:?}", filter_result);
 
     let on_create = {
         let todo_list = todo_list.to_owned();
@@ -22,7 +26,7 @@ pub fn app() -> Html {
                     .unwrap();
                 return;
             }
-            let is_exist = todo_list.contains(&name);
+            let is_exist = todo_list.iter().any(|x| x.name == name);
             if is_exist {
                 window().unwrap().alert_with_message("名称已存在").unwrap();
                 return;
@@ -44,20 +48,27 @@ pub fn app() -> Html {
             // );
 
             // 方式三：
-            todo_list.set(
-                todo_list
-                    .iter()
-                    .cloned()
-                    .chain([name].into_iter()) // [name] 是一个数组 .into_iter() 把它变成一个迭代器。 效果跟 once(name) 是一样的
-                    .collect(),
-            );
+            let new_todo_list = todo_list
+                .iter()
+                .cloned()
+                .chain([TodoEntry::new(name)].into_iter()) // [name] 是一个数组 .into_iter() 把它变成一个迭代器。 效果跟 once(name) 是一样的
+                .collect::<Vec<TodoEntry>>();
+
+            todo_list.set(new_todo_list.to_owned());
+
+            LocalStorage::set(KEY, new_todo_list.to_vec())
+                .expect("save to localstorage occur error");
         })
     };
 
-    use_effect_with(todo_list.clone(), {
+    use_effect_with((), {
         let todo_list = todo_list.clone();
         move |_| {
-            LocalStorage::set(KEY, todo_list.to_vec()).expect("save to localstorage occur error");
+            let todo_list_storage: Vec<TodoEntry> =
+                LocalStorage::get(KEY).unwrap_or_else(|_| vec![]);
+            log::debug!("todo list is {:?}", todo_list_storage);
+            todo_list.set(todo_list_storage);
+            || {}
         }
     });
 

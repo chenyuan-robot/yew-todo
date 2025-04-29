@@ -70,7 +70,7 @@ pub fn app() -> Html {
 # 注意
 
 - 访问 `todo_list` 元素时，需要 `todo_list.iter()`，因为它是 `Rc<Vec<_>>`，得先解引用。
-  (小知识：这里的 .iter()，其实背后是：1、_todo_list（解引用 Rc）2、.iter()（Vec 的迭代器），不过 Rust 语法糖帮你自动补了 _，所以写起来比较简单。)
+  (小知识：这里的 .iter()，其实背后是：1、\*todolist（解引用 Rc）2、.iter()（Vec 的迭代器），不过 Rust 语法糖帮你自动补了，所以写起来比较简单。)
 - `(**todo_list).clone()` 表示：  
   `*todo_list` 解 Rc -> `Vec<String>`，  
   再 `.clone()` 深拷贝。
