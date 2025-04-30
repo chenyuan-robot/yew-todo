@@ -1,6 +1,7 @@
 use std::any::type_name;
 
 use crate::{Filter, TodoEntry};
+use console_log::log;
 use strum::IntoEnumIterator;
 use yew::prelude::*;
 
@@ -13,6 +14,7 @@ pub struct Props {
     pub selected_filter: Filter,
     pub on_filterchange: Callback<Filter>,
     pub todos_left: u32,
+    pub todos_completed: u32,
 }
 
 #[function_component(Footer)]
@@ -23,6 +25,10 @@ pub fn footer(props: &Props) -> Html {
             on_filterchange.emit(filter);
         })
     };
+
+    let clear_complete_todo = Callback::from(|_| {
+        log::debug!("HI");
+    });
 
     html! {
         <footer class="footer">
@@ -62,6 +68,21 @@ pub fn footer(props: &Props) -> Html {
                     }).collect::<Vec<Html>>()
                 }
             </ul>
+            {
+                if props.todos_completed > 0 {
+                    html! {
+                        <button class="clear-completed" onclick={clear_complete_todo}>
+                            {"Clear completed"}
+                        </button>
+                    }
+                } else {
+                    html! {
+                        <button class="clear-completed">
+                            {"Clear completed"}
+                        </button>
+                    }
+                }
+            }
         </footer>
     }
 }

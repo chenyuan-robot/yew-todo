@@ -1,5 +1,5 @@
 use crate::header::Header;
-use crate::list::List;
+use crate::list::{self, List};
 use crate::{footer::Footer, TodoEntry};
 use crate::{Filter, TodoStatus};
 use gloo::storage::{LocalStorage, Storage};
@@ -116,6 +116,76 @@ pub fn app() -> Html {
         })
     };
 
+    let toggle_completed = {
+        let todo_list = todo_list.clone();
+        Callback::from(move |id| {
+            // 方式零： 推荐
+            todo_list.set({
+                let mut new_list = todo_list.to_vec();
+                for list in &mut new_list {
+                    if list.id == id {
+                        list.toggle_status();
+                    }
+                }
+                new_list
+            });
+
+            // 方式一：
+            // let mut new_list = todo_list.to_vec();
+            // let find = new_list.iter_mut().find(|todo| todo.id == id);
+            // if let Some(find_item) = find {
+            //     find_item.toggle_status();
+            //     todo_list.set(new_list);
+            // } else {
+            //     window()
+            //         .unwrap()
+            //         .alert_with_message("some error occur")
+            //         .unwrap();
+            // }
+
+            // 方式二： 每次手动 clone()
+            // let new_list = todo_list
+            //     .iter()
+            //     .map(|todo| {
+            //         if todo.id == id {
+            //             TodoEntry {
+            //                 status: if todo.status == TodoStatus::Active {
+            //                     TodoStatus::Completed
+            //                 } else {
+            //                     TodoStatus::Active
+            //                 },
+            //                 ..todo.clone()
+            //             }
+            //         } else {
+            //             TodoEntry { ..todo.clone() }
+            //         }
+            //     })
+            //     .collect::<Vec<_>>();
+            // log::debug!("{:?}", new_list);
+
+            // 方式二： 直接迭代器上.cloned()
+            // let new_list_clone = todo_list
+            //     .iter()
+            //     .cloned()
+            //     .map(|todo| {
+            //         if todo.id == id {
+            //             TodoEntry {
+            //                 status: if todo.status == TodoStatus::Active {
+            //                     TodoStatus::Completed
+            //                 } else {
+            //                     TodoStatus::Active
+            //                 },
+            //                 ..todo
+            //             }
+            //         } else {
+            //             TodoEntry { ..todo }
+            //         }
+            //     })
+            //     .collect::<Vec<_>>();
+            // todo_list.set(new_list_clone);
+        })
+    };
+
     use_effect_with((), {
         let todo_list = todo_list.clone();
         move |_| {
@@ -136,8 +206,8 @@ pub fn app() -> Html {
                     let todos_left = calc_todo_left();
                     html! {
                         <>
-                            <List {filter_list} />
-                            <Footer todos_left={todos_left} selected_filter={*filter} {on_filterchange} />
+                            <List {filter_list} {toggle_completed} />
+                            <Footer todos_left={todos_left} selected_filter={*filter} {on_filterchange} todos_completed={todo_list.len() as u32 - todos_left} />
                         </>
                     }
                 } else {
