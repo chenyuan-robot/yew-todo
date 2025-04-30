@@ -1,4 +1,6 @@
 use std::any::type_name;
+
+use crate::{Filter, TodoEntry};
 use strum::IntoEnumIterator;
 use yew::prelude::*;
 
@@ -6,14 +8,26 @@ fn print_type_of<T>(_: T) {
     log::debug!("Type is: {}", type_name::<T>());
 }
 
-use crate::Filter;
+#[derive(Properties, PartialEq, Debug)]
+pub struct Props {
+    pub selected_filter: Filter,
+    pub on_filterchange: Callback<Filter>,
+    pub todos_left: u32,
+}
 
 #[function_component(Footer)]
-pub fn footer() -> Html {
+pub fn footer(props: &Props) -> Html {
+    let on_filter_change = |filter: Filter| {
+        let on_filterchange = props.on_filterchange.clone();
+        Callback::from(move |_| {
+            on_filterchange.emit(filter);
+        })
+    };
+
     html! {
         <footer class="footer">
             <span class="todo-count">
-                <strong>{"strong"}</strong>
+                <strong>{props.todos_left}</strong>
                 <span>{"temp"}</span>
             </span>
             <ul class="filters">
@@ -38,7 +52,12 @@ pub fn footer() -> Html {
                     // --  写法三
                     Filter::iter().enumerate().map(|(index, filter)| {
                         html! {
-                            <li key={index}>{format!("{:?}", filter)}</li>
+                            <li key={index} onclick={on_filter_change(filter)}>
+                                // <a class={classes!("empty", (filter == props.selected_filter).then_some("selected"))}>
+                                <a class={classes!("test-class", (filter == props.selected_filter).then(|| Some("selected")))}>
+                                    { format!("{:?}", filter) }
+                                </a>
+                            </li>
                         }
                     }).collect::<Vec<Html>>()
                 }

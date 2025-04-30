@@ -49,7 +49,7 @@ impl TodoEntry {
 }
 
 #[non_exhaustive]
-#[derive(PartialEq, EnumIter, Debug)]
+#[derive(PartialEq, EnumIter, Debug, Clone, Copy)]
 pub enum Filter {
     All,
     Active,

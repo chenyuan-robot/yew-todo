@@ -1,7 +1,7 @@
 use crate::header::Header;
 use crate::list::List;
-use crate::Filter;
 use crate::{footer::Footer, TodoEntry};
+use crate::{Filter, TodoStatus};
 use gloo::storage::{LocalStorage, Storage};
 use web_sys::window;
 use yew::prelude::*;
@@ -13,8 +13,39 @@ pub fn app() -> Html {
     let filter = use_state(|| Filter::All);
     let todo_list = use_state(|| vec![TodoEntry::new(String::default())]);
 
-    let filter_result = use_memo(filter, move |_| format!("the result is {}", "hello"));
-    log::debug!("{:?}", filter_result);
+    let filter_list = use_memo((filter.clone(), todo_list.clone()), {
+        let filter = filter.clone();
+        let todo_list = todo_list.clone();
+        move |_| match *filter {
+            Filter::All => todo_list.to_vec(),
+            Filter::Active => {
+                let result = todo_list
+                    .to_vec()
+                    .iter()
+                    .filter(|x| x.status == TodoStatus::Active)
+                    .cloned()
+                    .collect::<Vec<TodoEntry>>();
+                result
+            }
+            Filter::Completed => {
+                let result = todo_list
+                    .to_vec()
+                    .iter()
+                    .filter(|x| x.status == TodoStatus::Completed)
+                    .cloned()
+                    .collect::<Vec<TodoEntry>>();
+                result
+            }
+        }
+    });
+
+    let on_filterchange: Callback<Filter> = {
+        let filter = filter.clone();
+        Callback::from(move |params| {
+            log::debug!("PARAMS {:?}", params);
+            filter.set(params);
+        })
+    };
 
     let on_create = {
         let todo_list = todo_list.to_owned();
@@ -31,6 +62,7 @@ pub fn app() -> Html {
                 window().unwrap().alert_with_message("名称已存在").unwrap();
                 return;
             }
+            // region: my section
             // 方式一：
             // todo_list.set({
             //     let mut todo_list = (*todo_list).clone();
@@ -46,7 +78,7 @@ pub fn app() -> Html {
             //         .chain(std::iter::once(name)) // 加上输入框的内容
             //         .collect(),
             // );
-
+            // endregion
             // 方式三：
             let new_todo_list = todo_list
                 .iter()
@@ -58,6 +90,29 @@ pub fn app() -> Html {
 
             LocalStorage::set(KEY, new_todo_list.to_vec())
                 .expect("save to localstorage occur error");
+        })
+    };
+
+    // 方式一
+    let calc_todo_left = || {
+        let mut acc: u32 = 0;
+        let v1 = todo_list.clone();
+        for item in v1.iter() {
+            if item.status == TodoStatus::Active {
+                acc += 1;
+            }
+        }
+        acc
+    };
+
+    // 方式二
+    let calc_active_todo_list = || {
+        todo_list.iter().fold(0u32, |acc, todo| {
+            if todo.status == TodoStatus::Active {
+                acc + 1
+            } else {
+                acc
+            }
         })
     };
 
@@ -78,10 +133,11 @@ pub fn app() -> Html {
             <Header on_create={on_create} />
             {
                 if todo_list.len() > 0 {
+                    let todos_left = calc_todo_left();
                     html! {
                         <>
-                            <List />
-                            <Footer />
+                            <List {filter_list} />
+                            <Footer todos_left={todos_left} selected_filter={*filter} {on_filterchange} />
                         </>
                     }
                 } else {
