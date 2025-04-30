@@ -1,7 +1,6 @@
 use std::any::type_name;
 
-use crate::{Filter, TodoEntry};
-use console_log::log;
+use crate::Filter;
 use strum::IntoEnumIterator;
 use yew::prelude::*;
 
@@ -13,12 +12,14 @@ fn print_type_of<T>(_: T) {
 pub struct Props {
     pub selected_filter: Filter,
     pub on_filterchange: Callback<Filter>,
+    pub clear_completed: Callback<()>,
     pub todos_left: u32,
     pub todos_completed: u32,
 }
 
 #[function_component(Footer)]
 pub fn footer(props: &Props) -> Html {
+    let clear_completed = props.clear_completed.clone();
     let on_filter_change = |filter: Filter| {
         let on_filterchange = props.on_filterchange.clone();
         Callback::from(move |_| {
@@ -26,15 +27,20 @@ pub fn footer(props: &Props) -> Html {
         })
     };
 
-    let clear_complete_todo = Callback::from(|_| {
-        log::debug!("HI");
+    let clear_complete_todo = Callback::from(move |_| {
+        clear_completed.emit(());
     });
+
+    let items_text = match props.todos_left {
+        1 => "item",
+        _ => "items",
+    };
 
     html! {
         <footer class="footer">
             <span class="todo-count">
                 <strong>{props.todos_left}</strong>
-                <span>{"temp"}</span>
+                <span>{format!(" {} left", items_text)}</span>
             </span>
             <ul class="filters">
                 {
@@ -76,11 +82,7 @@ pub fn footer(props: &Props) -> Html {
                         </button>
                     }
                 } else {
-                    html! {
-                        <button class="clear-completed">
-                            {"Clear completed"}
-                        </button>
-                    }
+                    html! {}
                 }
             }
         </footer>

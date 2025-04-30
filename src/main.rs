@@ -28,6 +28,7 @@ pub struct TodoEntry {
     pub name: String,
     pub status: TodoStatus,
     pub id: Uuid,
+    pub edit: bool,
 }
 
 impl TodoEntry {
@@ -36,6 +37,7 @@ impl TodoEntry {
             name,
             status: TodoStatus::Active,
             id: Uuid::new_v4(),
+            edit: false,
         }
     }
 

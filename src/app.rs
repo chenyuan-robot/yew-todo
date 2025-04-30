@@ -2,7 +2,9 @@ use crate::header::Header;
 use crate::list::{self, List};
 use crate::{footer::Footer, TodoEntry};
 use crate::{Filter, TodoStatus};
+use anyhow::Result;
 use gloo::storage::{LocalStorage, Storage};
+use uuid::Uuid;
 use web_sys::window;
 use yew::prelude::*;
 
@@ -44,6 +46,68 @@ pub fn app() -> Html {
         Callback::from(move |params| {
             log::debug!("PARAMS {:?}", params);
             filter.set(params);
+        })
+    };
+
+    let toggle_complete_all = {
+        let todo_list = todo_list.clone();
+        Callback::from(move |checked| {
+            let new_todo_list = todo_list
+                .iter()
+                .cloned()
+                .map(|todo| TodoEntry {
+                    status: if checked {
+                        TodoStatus::Completed
+                    } else {
+                        TodoStatus::Active
+                    },
+                    ..todo
+                })
+                .collect::<Vec<TodoEntry>>();
+            todo_list.set(new_todo_list.to_owned());
+            LocalStorage::set(KEY, new_todo_list).expect("save to localstorage occur error");
+        })
+    };
+
+    let rename_todo = {
+        let todo_list = todo_list.clone();
+        Callback::from(move |(value, id): (String, Uuid)| {
+            todo_list.set({
+                let mut new_list = todo_list.to_vec();
+                for list in &mut new_list {
+                    if list.id == id {
+                        list.name = value.clone();
+                    }
+                }
+                LocalStorage::set(KEY, new_list.clone()).expect("save to localstorage occur error");
+                new_list
+            });
+        })
+    };
+
+    let clear_todo = {
+        let todo_list = todo_list.clone();
+        Callback::from(move |id| {
+            let new_list = todo_list
+                .iter()
+                .cloned()
+                .filter(|todo| todo.id != id)
+                .collect::<Vec<TodoEntry>>();
+            todo_list.set(new_list.to_owned());
+            LocalStorage::set(KEY, new_list).expect("save to localstorage occur error");
+        })
+    };
+
+    let clear_completed = {
+        let todo_list = todo_list.clone();
+        Callback::from(move |_| {
+            let new_list = todo_list
+                .iter()
+                .cloned()
+                .filter(|todo| todo.status == TodoStatus::Active)
+                .collect::<Vec<TodoEntry>>();
+            todo_list.set(new_list.to_owned());
+            LocalStorage::set(KEY, new_list).expect("save to localstorage occur error");
         })
     };
 
@@ -127,9 +191,10 @@ pub fn app() -> Html {
                         list.toggle_status();
                     }
                 }
+                LocalStorage::set(KEY, new_list.clone()).expect("save to localstorage occur error");
                 new_list
             });
-
+            // region: my section
             // 方式一：
             // let mut new_list = todo_list.to_vec();
             // let find = new_list.iter_mut().find(|todo| todo.id == id);
@@ -183,6 +248,7 @@ pub fn app() -> Html {
             //     })
             //     .collect::<Vec<_>>();
             // todo_list.set(new_list_clone);
+            // endregion
         })
     };
 
@@ -206,8 +272,8 @@ pub fn app() -> Html {
                     let todos_left = calc_todo_left();
                     html! {
                         <>
-                            <List {filter_list} {toggle_completed} />
-                            <Footer todos_left={todos_left} selected_filter={*filter} {on_filterchange} todos_completed={todo_list.len() as u32 - todos_left} />
+                            <List {rename_todo} {toggle_complete_all} {clear_todo} {filter_list} {toggle_completed} />
+                            <Footer {clear_completed} todos_left={todos_left} selected_filter={*filter} {on_filterchange} todos_completed={todo_list.len() as u32 - todos_left} />
                         </>
                     }
                 } else {
